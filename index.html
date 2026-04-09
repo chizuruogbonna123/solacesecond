@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Solace — Your Private Diary</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ═══════════ SETUP ═══════════ -->
+<div class="screen active" id="setup-screen">
+  <div class="brand-mark">Solace</div>
+  <div class="brand-sub">Your private sanctuary</div>
+  <div class="setup-card">
+    <div class="step active" id="s1">
+      <h2>Welcome</h2>
+      <p class="sub">Let's set up your private diary.</p>
+      <label class="field-label">What should I call you?</label>
+      <input class="text-input" id="inp-name" type="text" placeholder="Your name…" maxlength="40" onkeydown="if(event.key==='Enter')goStep2()"/>
+      <div class="err-msg" id="err1"></div>
+      <button class="btn-main" onclick="goStep2()">Continue →</button>
+    </div>
+    <div class="step" id="s2">
+      <h2>Create your PIN</h2>
+      <p class="sub">Your diary stays locked until you enter it.</p>
+      <label class="field-label">Choose a 4-digit PIN</label>
+      <input class="text-input" id="inp-pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" onkeydown="if(event.key==='Enter')document.getElementById('inp-pin2').focus()"/>
+      <label class="field-label">Confirm PIN</label>
+      <input class="text-input" id="inp-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" onkeydown="if(event.key==='Enter')finishSetup()"/>
+      <div class="err-msg" id="err2"></div>
+      <button class="btn-main" onclick="finishSetup()">Enter my diary →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LOCK ═══════════ -->
+<div class="screen" id="lock-screen">
+  <div class="lock-logo">Solace</div>
+  <div class="lock-sub">Your private sanctuary</div>
+  <div class="lock-card">
+    <div class="lock-greeting" id="lock-greet">Welcome back</div>
+    <div class="lock-hint">Enter your PIN to continue</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="numpad">
+      <button class="nk" onclick="nkPress(1)">1</button><button class="nk" onclick="nkPress(2)">2</button><button class="nk" onclick="nkPress(3)">3</button>
+      <button class="nk" onclick="nkPress(4)">4</button><button class="nk" onclick="nkPress(5)">5</button><button class="nk" onclick="nkPress(6)">6</button>
+      <button class="nk" onclick="nkPress(7)">7</button><button class="nk" onclick="nkPress(8)">8</button><button class="nk" onclick="nkPress(9)">9</button>
+      <button class="nk ghost"></button><button class="nk" onclick="nkPress(0)">0</button><button class="nk del" onclick="nkDel()">⌫</button>
+    </div>
+    <div class="lock-footer">Forgot PIN? <a href="#" onclick="resetAll(event)">Reset diary</a></div>
+    <div class="lock-err" id="lock-err"></div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div class="screen" id="app-screen">
+  <header class="app-header">
+    <div class="h-logo">Solace</div>
+    <div class="h-date" id="h-date"></div>
+    <div class="h-right">
+      <button class="hbtn menu-btn" title="Menu" onclick="toggleSidebar()">☰</button>
+      <button class="hbtn" title="Calendar" onclick="openCalendar()">📅</button>
+      <button class="hbtn" title="Settings" onclick="openSettings()">⚙️</button>
+      <button class="hbtn" id="theme-toggle" title="Toggle dark mode" onclick="toggleTheme()">🌙</button>
+      <button class="hbtn" title="Lock diary" onclick="lockApp()">🔒</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sb-top">
+        <button class="new-btn" onclick="newEntry()">＋ &nbsp;New Entry</button>
+        <div class="search-wrap">
+          <input id="search-in" placeholder="Search entries…" oninput="filterEntries()" />
+        </div>
+      </div>
+      <div class="mood-filter" id="mood-filter">
+        <button class="mf-btn on" data-mood="" onclick="setMoodFilter(this,'')">All</button>
+        <button class="mf-btn" data-mood="🌟 Great" onclick="setMoodFilter(this,'🌟 Great')">🌟</button>
+        <button class="mf-btn" data-mood="😊 Good" onclick="setMoodFilter(this,'😊 Good')">😊</button>
+        <button class="mf-btn" data-mood="😐 Okay" onclick="setMoodFilter(this,'😐 Okay')">😐</button>
+        <button class="mf-btn" data-mood="😔 Low" onclick="setMoodFilter(this,'😔 Low')">😔</button>
+        <button class="mf-btn" data-mood="😤 Frustrated" onclick="setMoodFilter(this,'😤 Frustrated')">😤</button>
+      </div>
+      <div class="sb-label">Your Entries</div>
+      <div class="entries-list" id="entries-list"></div>
+      <div class="stats-drawer" id="stats-drawer">
+        <div class="stats-title">Your journey</div>
+        <div class="stats-grid" id="stats-grid"></div>
+      </div>
+    </aside>
+
+    <section class="editor">
+      <div class="ed-toolbar">
+        <div class="mood-row" id="mood-row">
+          <button class="mbtn" onclick="pickMood(this,'🌟 Great')">🌟 Great</button>
+          <button class="mbtn" onclick="pickMood(this,'😊 Good')">😊 Good</button>
+          <button class="mbtn" onclick="pickMood(this,'😐 Okay')">😐 Okay</button>
+          <button class="mbtn" onclick="pickMood(this,'😔 Low')">😔 Low</button>
+          <button class="mbtn" onclick="pickMood(this,'😤 Frustrated')">😤 Frustrated</button>
+        </div>
+        <div class="tags-wrap" id="tags-wrap">
+          <input id="tag-in" placeholder="+ tag" onkeydown="tagKey(event)" maxlength="20"/>
+        </div>
+        <div class="toolbar-right">
+          <button class="export-btn" onclick="openExportModal()">↓ Export</button>
+          <button class="save-btn" onclick="saveEntry()">Save</button>
+        </div>
+      </div>
+
+      <div id="ed-empty">
+        <div class="empty-icon">📖</div>
+        <p>Select an entry from the left,<br/>or create a new one to begin writing.</p>
+      </div>
+
+      <div id="ed-content">
+        <input class="ed-title" id="ed-title" placeholder="Give this moment a title…" maxlength="100"/>
+        <div class="ed-meta" id="ed-meta"></div>
+        <div class="sections-container" id="sections-container"></div>
+        <div class="word-count" id="word-count"></div>
+      </div>
+    </section>
+
+    <aside class="ai-panel">
+      <div class="ai-head">
+        <div class="ai-name">Journal Companion</div>
+        <div class="ai-pulse"></div>
+      </div>
+      <div class="ai-msgs" id="ai-msgs">
+        <div class="msg ai">Hello 🌿 I'm your quiet companion inside Solace. Write freely — I'm here whenever you need to reflect, be heard, or find the right words.</div>
+      </div>
+      <div class="chips">
+        <button class="chip" onclick="chipSend('Help me reflect on what I wrote today')">Reflect on today</button>
+        <button class="chip" onclick="chipSend('Give me a journaling prompt for right now')">Writing prompt</button>
+        <button class="chip" onclick="chipSend('I just need to vent — please just listen')">Just listen</button>
+        <button class="chip" onclick="chipSend('What patterns do you notice in how I feel?')">Find patterns</button>
+      </div>
+      <div class="ai-input-row">
+        <input id="ai-in" placeholder="Talk to your companion…" onkeydown="if(event.key==='Enter')sendAI()"/>
+        <button class="send-btn" onclick="sendAI()">➤</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ═══════════ EXPORT MODAL ═══════════ -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal-box">
+    <div class="modal-title">Export your diary</div>
+    <div class="modal-sub">Choose a format and what to include.</div>
+    <div class="export-options">
+      <div class="export-opt selected" id="opt-txt" onclick="selectExportFmt('txt')">
+        <div class="export-opt-icon">📄</div>
+        <div class="export-opt-info">
+          <div class="export-opt-name">Plain Text (.txt)</div>
+          <div class="export-opt-desc">Simple, readable, works everywhere</div>
+        </div>
+      </div>
+      <div class="export-opt" id="opt-html" onclick="selectExportFmt('html')">
+        <div class="export-opt-icon">🌐</div>
+        <div class="export-opt-info">
+          <div class="export-opt-name">Formatted HTML (.html)</div>
+          <div class="export-opt-desc">Beautiful, styled, open in any browser</div>
+        </div>
+      </div>
+      <div class="export-opt" id="opt-json" onclick="selectExportFmt('json')">
+        <div class="export-opt-icon">🗂️</div>
+        <div class="export-opt-info">
+          <div class="export-opt-name">JSON Backup (.json)</div>
+          <div class="export-opt-desc">Full data backup, importable later</div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Include</div>
+    <div class="modal-scope">
+      <button class="scope-btn selected" id="scope-current" onclick="selectScope('current')">Current entry</button>
+      <button class="scope-btn" id="scope-all" onclick="selectScope('all')">All entries</button>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeExportModal()">Cancel</button>
+      <button class="btn-export" onclick="doExport()">Download</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════ CALENDAR MODAL ═══════════ -->
+<div class="calendar-overlay" id="calendar-modal">
+  <div class="calendar-box">
+    <div class="cal-header">
+      <div class="cal-title" id="cal-month-year"></div>
+      <div class="cal-nav">
+        <button class="cal-btn" onclick="prevMonth()">‹</button>
+        <button class="cal-btn" onclick="nextMonth()">›</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div style="text-align:center;margin-top:1.5rem;font-size:0.78rem;color:var(--muted);">
+      <button class="btn-cancel" onclick="closeCalendar()" style="width:100%;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SETTINGS MODAL ═══════════ -->
+<div class="settings-overlay" id="settings-modal">
+  <div class="settings-box">
+    <div class="settings-title">Settings</div>
+    <div class="settings-section">
+      <label class="settings-label">Change PIN</label>
+      <div class="pin-fields">
+        <input class="pin-field" id="old-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Current PIN" />
+        <input class="pin-field" id="new-pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="New PIN" />
+        <input class="pin-field" id="new-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Confirm new PIN" />
+      </div>
+      <div class="pin-err" id="pin-err"></div>
+    </div>
+    <div class="settings-btns">
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-export" onclick="changePIN()">Update PIN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PROMPT MODAL ═══════════ -->
+<div class="prompt-overlay" id="prompt-modal">
+  <div class="prompt-box">
+    <div class="prompt-icon">💭</div>
+    <div class="prompt-title">Today's Prompt</div>
+    <div class="prompt-text" id="prompt-text"></div>
+    <div class="prompt-btns">
+      <button class="prompt-btn" onclick="skipPrompt()">Another</button>
+      <button class="prompt-btn use" onclick="usePrompt()">Use this prompt</button>
+      <button class="prompt-btn" onclick="startBlank()">Start blank</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
